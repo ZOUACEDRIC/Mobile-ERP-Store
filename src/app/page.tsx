@@ -84,7 +84,8 @@ export default function Home(){
   const product=products.find(p=>p.id===selectedProduct);
   const qty=Number(quantity);
   if(!product||!Number.isFinite(qty)||qty<=0){setError("Choose a product and a valid quantity.");return;}
-  if(Number(product.quantity_on_hand)<qty){setError("Not enough stock for this quantity.");return;}
+  const alreadyInCart=cart.find(x=>x.productId===product.id)?.quantity||0;
+  if(Number(product.quantity_on_hand)<alreadyInCart+qty){setError("The basket quantity would exceed available stock.");return;}
   setCart(current=>{const exists=current.find(x=>x.productId===product.id);return exists?current.map(x=>x.productId===product.id?{...x,quantity:x.quantity+qty}:x):[...current,{productId:product.id,quantity:qty,unitPrice:Number(product.selling_price)}]});
   setSelectedProduct("");setQuantity("1");setError("");
  }
