@@ -1,44 +1,61 @@
-# Mobile ERP Store
+# StorePilot ERP
 
-A mobile-first, offline-capable ERP for small and medium-sized stores. The intended first market is Cameroon, with XAF as the default currency; the data model remains configurable for other markets.
+StorePilot is a mobile-first store operations platform designed for small and medium-sized retailers. XAF is the default currency and Cameroon is the initial market, while each workspace can select its own currency and timezone.
 
-## Current status
+## What is in this branch
 
-This repository is still an early product foundation, **not a production-ready ERP**. The Neon PostgreSQL project and initial multi-tenant schema have been provisioned. The schema covers organizations and membership roles, stores, products and categories, stock movements, customers, suppliers, purchases, sales, expenses and audit logs. A current-stock view is also available.
+This branch introduces the first web application foundation:
+- Responsive dashboard and mobile navigation.
+- Neon Managed Auth sign-in and sign-up.
+- Multi-tenant business workspace onboarding.
+- Product catalogue and stock visibility.
+- Stock receiving, transactional point-of-sale and expense entry.
+- Server-side organization membership and role checks.
+- Neon PostgreSQL persistence using a pooled server-side connection.
+- Installable PWA manifest and application icon.
 
-The application itself is not yet connected to Neon. The repository still needs a complete responsive UI/PWA, real sign-in and session handling, server-side authorization, offline data sync, transactional business workflows, tests, and deployment. The existing C++/SQLite experiment is not the production persistence layer.
+The API keeps the database URL on the server. Sales are committed in a transaction: the receipt, sale lines and stock movements either all succeed or all roll back. The app checks available stock while holding a transaction-level advisory lock for the store.
 
-## Database
+## Important current limitations
 
-The initial migration is in [database/migrations/202611200001_initial_neon_erp.sql](database/migrations/202611200001_initial_neon_erp.sql).
+This is a foundation, not yet a production-ready ERP. Before launch it still needs:
+- CI verification and real Neon environment configuration.
+- End-to-end sign-up/sign-in and account-isolation tests.
+- Supplier management, purchase order lifecycle, returns, refunds, discounts, tax rules, staff invitations and fine-grained permission management.
+- Offline-first local storage and conflict-safe sync (the PWA manifest alone does not mean offline mode is implemented).
+- Audit-log writes, export/restore, automated backups, monitoring and production security review.
+- Full receipt printing and accounting reports.
 
-Core design decisions:
-- Every business record is scoped to an organization.
-- Membership roles are constrained to owner, admin, manager, cashier, stock clerk and viewer.
-- Monetary amounts use fixed-precision numeric columns, with XAF as the default organization currency.
-- Stock is represented as an append-only movement ledger; `current_stock` is a read view over those movements.
-- Neon Managed Auth is provisioned for user identity. The application must still enforce membership and role permissions on every server operation.
+Do not process real business transactions until the test and security checklist passes.
 
-Do not connect a browser directly to the database or expose a database URL. Add the connection only to a trusted server environment.
+## Neon setup
 
-## Planned end-to-end workflows
+The initial database schema is in `database/migrations/202611200001_initial_neon_erp.sql`. The Neon project has Managed Auth provisioned and the base schema is applied.
 
-1. Create a business, invite staff and assign roles.
-2. Set up stores, categories and products.
-3. Receive purchases and record stock movements.
-4. Complete sales, issue receipts and deduct stock atomically.
-5. Record expenses, losses, returns and adjustments with audit history.
-6. Produce stock, sales, margin and expense reports.
-7. Work offline on mobile and sync safely when connectivity returns.
-8. Export and restore business data.
+Configure these server-only environment variables in local development and deployment:
+- `DATABASE_URL`: pooled PostgreSQL connection string for the Mobile ERP Neon project.
+- `NEON_AUTH_BASE_URL`: the branch-specific Managed Auth URL.
+- `NEON_AUTH_COOKIE_SECRET`: random secret of at least 32 characters (generate using `openssl rand -base64 32`).
 
-## Development priorities
+Never commit real credentials or expose them through `NEXT_PUBLIC_` variables.
 
-- Build a mobile-first responsive PWA with accessible navigation and clear loading, empty and error states.
-- Implement transactional sales and purchase workflows; never update stock without a corresponding movement.
-- Enforce tenant isolation and role permissions on the server.
-- Add idempotency for sync and sale submission, conflict handling, and audit trails.
-- Add automated tests for stock arithmetic, totals, concurrency, authorization and offline recovery.
-- Add backup/export, privacy documentation and operational monitoring before launch.
+## Run locally
 
-Until those workflows pass end-to-end tests, do not describe the product as operational or production-ready.
+1. Install Node.js 22 LTS.
+2. Run `npm install`.
+3. Copy `.env.example` to `.env.local` and add your private Neon connection string and cookie secret.
+4. Run `npm run dev` and open http://localhost:3000.
+
+## Database model
+
+The PostgreSQL schema is organization-scoped. It includes organizations, memberships and roles, stores, products, categories, customers, suppliers, sales, sale lines, purchases, purchase lines, stock movements, expenses and audit logs. Stock is represented by an append-only movement ledger, with `current_stock` as a read view.
+
+## Safety and integrity
+
+- Every API resolves the signed-in identity on the server.
+- Organization membership is checked before business data is read or changed.
+- Product, sales, purchase and expense operations use parameterized SQL.
+- Sales are atomic and prevent checkout beyond recorded available stock.
+- The browser never receives the database connection string.
+
+The existing C++/SQLite experiment remains in `database/` as a separate learning artifact; it is not the web app's persistence layer.
