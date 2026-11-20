@@ -1,28 +1,44 @@
 # Mobile ERP Store
 
-An early prototype for an AI-assisted ERP system for small and medium-sized stores.
+A mobile-first, offline-capable ERP for small and medium-sized stores. The intended first market is Cameroon, with XAF as the default currency; the data model remains configurable for other markets.
 
-## Current repository status
+## Current status
 
-**This is not yet a complete ERP product.** The repository currently contains:
-- A small C++/SQLite database experiment under `database/`
-- Module folders for staff, sales, maintenance, stocks, losses, vouchers and complaints, with mostly placeholder documentation
-- No complete mobile/web user interface, authentication, role/permission system, operational inventory workflow, sales workflow or production deployment
+This repository is still an early product foundation, **not a production-ready ERP**. The Neon PostgreSQL project and initial multi-tenant schema have been provisioned. The schema covers organizations and membership roles, stores, products and categories, stock movements, customers, suppliers, purchases, sales, expenses and audit logs. A current-stock view is also available.
 
-The database sample currently demonstrates opening a SQLite database. It is not a complete persistence layer or a finished ERP backend.
+The application itself is not yet connected to Neon. The repository still needs a complete responsive UI/PWA, real sign-in and session handling, server-side authorization, offline data sync, transactional business workflows, tests, and deployment. The existing C++/SQLite experiment is not the production persistence layer.
 
-## Recommended next engineering phase
+## Database
 
-Before expanding features, define the target users and core workflow. Then build and test one vertical slice end to end:
-1. Store and staff setup with role-based access
-2. Product catalogue and stock movements
-3. Sales and receipts
-4. Purchase and supplier records
-5. Losses/adjustments with an audit trail
-6. Reporting and backups
+The initial migration is in [database/migrations/202611200001_initial_neon_erp.sql](database/migrations/202611200001_initial_neon_erp.sql).
 
-Do not describe this repository as production-ready or as a functioning AI-powered ERP until those workflows are implemented, secured and tested.
+Core design decisions:
+- Every business record is scoped to an organization.
+- Membership roles are constrained to owner, admin, manager, cashier, stock clerk and viewer.
+- Monetary amounts use fixed-precision numeric columns, with XAF as the default organization currency.
+- Stock is represented as an append-only movement ledger; `current_stock` is a read view over those movements.
+- Neon Managed Auth is provisioned for user identity. The application must still enforce membership and role permissions on every server operation.
 
-## Development
+Do not connect a browser directly to the database or expose a database URL. Add the connection only to a trusted server environment.
 
-The current database prototype is under `database/`. Its Makefile and SQLite build should be treated as experimental until a clean CI build is added.
+## Planned end-to-end workflows
+
+1. Create a business, invite staff and assign roles.
+2. Set up stores, categories and products.
+3. Receive purchases and record stock movements.
+4. Complete sales, issue receipts and deduct stock atomically.
+5. Record expenses, losses, returns and adjustments with audit history.
+6. Produce stock, sales, margin and expense reports.
+7. Work offline on mobile and sync safely when connectivity returns.
+8. Export and restore business data.
+
+## Development priorities
+
+- Build a mobile-first responsive PWA with accessible navigation and clear loading, empty and error states.
+- Implement transactional sales and purchase workflows; never update stock without a corresponding movement.
+- Enforce tenant isolation and role permissions on the server.
+- Add idempotency for sync and sale submission, conflict handling, and audit trails.
+- Add automated tests for stock arithmetic, totals, concurrency, authorization and offline recovery.
+- Add backup/export, privacy documentation and operational monitoring before launch.
+
+Until those workflows pass end-to-end tests, do not describe the product as operational or production-ready.
