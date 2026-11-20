@@ -1,0 +1,10 @@
+{
+  "name": "StorePilot ERP",
+  "short_name": "StorePilot",
+  "description": "Mobile-first store operations and inventory management.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f7fb",
+  "theme_color": "#152b4a",
+  "icons": [{ "src": "/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }]
+}
