@@ -1,0 +1,30 @@
+name: Database module build
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "database/**"
+      - ".github/workflows/database-build.yml"
+  pull_request:
+    branches: [main]
+    paths:
+      - "database/**"
+      - ".github/workflows/database-build.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  sqlite-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build database module
+        working-directory: database
+        run: make clean all
+      - name: Run SQLite smoke test
+        working-directory: database
+        run: |
+          ./build/database
+          test -f test_db

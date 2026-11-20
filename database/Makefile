@@ -30,10 +30,10 @@ OBJ = $(SRC:$(SRCDIR)/%$(EXT)=$(OBJDIR)/%.o)
 INC = $(SRC:$(SRCDIR)/%$(EXT)=$(INCDIR)/%.h)
 DEP = $(OBJ:$(OBJDIR)/%.o=$(DEPDIR)/%.d)
 LIB = $(filter-out lib/lib$(MAINFILE).a, $(OBJ:$(OBJDIR)/%.o=$(LIBDIR)/lib%.a)) $(LIBDIR)/libsqlite3.a
-LIBLINK = -L./$(LIBDIR) $(patsubst lib/lib%.a,-l%,$(wildcard $(LIBDIR)/*.a))
+LIBLINK = -L./$(LIBDIR) -lsqlite_database -lsqlite3
 
 # UNIX-based OS variables & settings
-RM = rm
+RM = rm -f
 DELOBJ = $(OBJ)
 DELLIB = $(LIB)
 DELDEP = $(DEP)
@@ -53,18 +53,23 @@ WAPP = $(BUILDDIR)\\$(APPNAME)$(EXE)
 
 all: $(APP)
 
+.PHONY: dirs
+dirs:
+	mkdir -p $(OBJDIR) $(DEPDIR) $(LIBDIR) $(BUILDDIR)
+
 # Builds the app
+$(APP): | dirs
 $(APP): $(OBJDIR)/sqlite3.o $(OBJ) $(LIB)
 	$(CXX) $(CXXFLAGS) $(OBJDIR)/$(MAINFILE).o $(LIBLINK) -o $@ $(CCFLAGS) $(LDFLAGS)
 
 # Creates the dependency rules
-$(DEPDIR)/%.d: $(SRCDIR)/%$(EXT) $(SRCDIR)/sqlite3.c
+$(DEPDIR)/%.d: $(SRCDIR)/%$(EXT) $(SRCDIR)/sqlite3.c | dirs
 	@$(CPP) $(CFLAGS) -I./$(INCDIR) $< -MM -MT $(@:%.d=$(OBJDIR)/%.o) >$@
 
 # Building rule for .o files and its .c/.cpp in combination with all .h
-$(OBJDIR)/sqlite3.o: $(SRCDIR)/sqlite3.c
+$(OBJDIR)/sqlite3.o: $(SRCDIR)/sqlite3.c | dirs
 	$(CC) -o $@ -c $<
-$(OBJDIR)/%.o: $(SRCDIR)/%$(EXT)
+$(OBJDIR)/%.o: $(SRCDIR)/%$(EXT) | dirs
 	$(CXX) $(CXXFLAGS) -I./$(INCDIR) -o $@ -c $<
 
 # Building rule for .a files
