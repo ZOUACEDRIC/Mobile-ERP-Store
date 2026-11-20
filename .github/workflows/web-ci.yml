@@ -1,0 +1,22 @@
+name: StorePilot web CI
+on:
+  push:
+    branches: [main]
+    paths: ["src/**", "public/**", "package.json", "tsconfig.json", "next.config.ts", "next-env.d.ts", ".github/workflows/web-ci.yml"]
+  pull_request:
+    branches: [main]
+    paths: ["src/**", "public/**", "package.json", "tsconfig.json", "next.config.ts", "next-env.d.ts", ".github/workflows/web-ci.yml"]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm install --no-audit --no-fund
+      - run: npm run typecheck
+      - run: npm run build
