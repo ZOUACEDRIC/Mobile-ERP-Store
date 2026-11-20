@@ -33,7 +33,7 @@ LIB = $(filter-out lib/lib$(MAINFILE).a, $(OBJ:$(OBJDIR)/%.o=$(LIBDIR)/lib%.a)) 
 LIBLINK = -L./$(LIBDIR) $(patsubst lib/lib%.a,-l%,$(wildcard $(LIBDIR)/*.a))
 
 # UNIX-based OS variables & settings
-RM = rm
+RM = rm -f
 DELOBJ = $(OBJ)
 DELLIB = $(LIB)
 DELDEP = $(DEP)
