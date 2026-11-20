@@ -43,9 +43,10 @@ export async function POST(request: NextRequest) {
       if (!p.rowCount) { await client.query("ROLLBACK"); return NextResponse.json({error:"One of the selected products is unavailable."},{status:400}); }
       const stock=await client.query("SELECT COALESCE(sum(quantity),0)::numeric AS quantity FROM public.stock_movements WHERE organization_id=$1 AND store_id=$2 AND product_id=$3",[org,storeId,item.productId]);
       if (Number(stock.rows[0].quantity)<item.quantity) { await client.query("ROLLBACK"); return NextResponse.json({error:"Insufficient stock for "+p.rows[0].name+"."},{status:409}); }
-      const lineTotal=Math.round(item.quantity*item.unitPrice*100)/100;
+      const unitPrice=Number(p.rows[0].selling_price);
+      const lineTotal=Math.round(item.quantity*unitPrice*100)/100;
       subtotal+=lineTotal;
-      products.push({...item,name:p.rows[0].name,lineTotal});
+      products.push({...item,name:p.rows[0].name,unitPrice,lineTotal});
     }
     const total=Math.round(subtotal*100)/100;
     const receipt="SP-"+new Date().toISOString().slice(0,10).replace(/-/g,"")+"-"+crypto.randomUUID().slice(0,8).toUpperCase();
