@@ -22,9 +22,9 @@ export async function POST(request: NextRequest) {
   let body: {storeId?:unknown;paymentMethod?:unknown;items?:unknown};
   try { body=await request.json(); } catch { return NextResponse.json({error:"Invalid request."},{status:400}); }
   if (!Array.isArray(body.items) || body.items.length<1 || body.items.length>40) return NextResponse.json({error:"Add between 1 and 40 sale items."},{status:400});
-  const items = body.items.map((item: any)=>({productId:String(item?.productId??""),quantity:Number(item?.quantity),unitPrice:Number(item?.unitPrice)}));
-  if (items.some((i:any)=>! /^[0-9a-f-]{36}$/i.test(i.productId) || !Number.isFinite(i.quantity) || i.quantity<=0 || !Number.isFinite(i.unitPrice) || i.unitPrice<0) || new Set(items.map((i:any)=>i.productId)).size!==items.length) {
-    return NextResponse.json({error:"Each item must have a valid product, positive quantity and non-negative price. Duplicate products are not allowed."},{status:400});
+  const items = body.items.map((item: any)=>({productId:String(item?.productId??""),quantity:Number(item?.quantity)}));
+  if (items.some((i:any)=>! /^[0-9a-f-]{36}$/i.test(i.productId) || !Number.isFinite(i.quantity) || i.quantity<=0) || new Set(items.map((i:any)=>i.productId)).size!==items.length) {
+    return NextResponse.json({error:"Each item must have a valid product and positive quantity. Duplicate products are not allowed."},{status:400});
   }
   const paymentMethod = typeof body.paymentMethod==="string" ? body.paymentMethod : "cash";
   if (!methods.includes(paymentMethod)) return NextResponse.json({error:"Select a valid payment method."},{status:400});
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
       products.push({...item,name:p.rows[0].name,lineTotal});
     }
     const total=Math.round(subtotal*100)/100;
-    const receipt="SP-"+new Date().toISOString().slice(0,10).replace(/-/g,"")+"-"+crypto.randomUUID().slice(0,6).toUpperCase();
+    const receipt="SP-"+new Date().toISOString().slice(0,10).replace(/-/g,"")+"-"+crypto.randomUUID().slice(0,8).toUpperCase();
     const sale=await client.query(`INSERT INTO public.sales(organization_id,store_id,receipt_number,status,subtotal,total,payment_method,created_by)
       VALUES($1,$2,$3,'completed',$4,$4,$5,$6) RETURNING id,receipt_number,total,payment_method,created_at`,
       [org,storeId,receipt,total,paymentMethod,ctx.user.id]);
