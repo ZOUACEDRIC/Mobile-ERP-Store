@@ -30,7 +30,7 @@ OBJ = $(SRC:$(SRCDIR)/%$(EXT)=$(OBJDIR)/%.o)
 INC = $(SRC:$(SRCDIR)/%$(EXT)=$(INCDIR)/%.h)
 DEP = $(OBJ:$(OBJDIR)/%.o=$(DEPDIR)/%.d)
 LIB = $(filter-out lib/lib$(MAINFILE).a, $(OBJ:$(OBJDIR)/%.o=$(LIBDIR)/lib%.a)) $(LIBDIR)/libsqlite3.a
-LIBLINK = -L./$(LIBDIR) $(patsubst lib/lib%.a,-l%,$(wildcard $(LIBDIR)/*.a))
+LIBLINK = -L./$(LIBDIR) -lsqlite_database -lsqlite3
 
 # UNIX-based OS variables & settings
 RM = rm -f
